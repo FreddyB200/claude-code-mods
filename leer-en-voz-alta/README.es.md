@@ -7,8 +7,7 @@
 
 [English](README.md)
 
-![Terminal de Claude Code tras ejecutar /leer, con la confirmación de lectura](docs/images/leer-command.png)
-
+<!-- screenshot pending: docs/images/leer-command.png (see docs/SCREENSHOTS.md) -->
 > **¿Buscas algo más pulido?** [Narrator](https://github.com/midudev/better-claude), de `midudev/better-claude`, hace lo mismo mejor y está mejor mantenido (ver [Narrator frente a este mod](#narrator-frente-a-este-mod)). Este es un mod personal pequeño que conservo por ser simple y funcionar sin conexión.
 
 ## Por qué

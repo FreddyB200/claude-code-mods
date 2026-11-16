@@ -7,8 +7,7 @@
 
 [Español](README.es.md)
 
-![Claude Code terminal after running /leer, showing the reading confirmation](docs/images/leer-command.png)
-
+<!-- screenshot pending: docs/images/leer-command.png (see docs/SCREENSHOTS.md) -->
 > **Looking for something more polished?** [Narrator](https://github.com/midudev/better-claude) from `midudev/better-claude` does the same job better and is better maintained (see [Narrator vs. this mod](#narrator-vs-this-mod)). This one is a small personal mod that I kept because it is simple and offline.
 
 ## Why

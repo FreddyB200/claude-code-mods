@@ -7,8 +7,7 @@
 
 [English](README.md)
 
-![Chips sobre el prompt de Claude Code con la vista previa de una carpeta](docs/images/path-chips.png)
-
+<!-- screenshot pending: docs/images/path-chips.png (see docs/SCREENSHOTS.md) -->
 > **¿Buscas algo más pulido?** [Quick Peek](https://github.com/midudev/better-claude), de `midudev/better-claude`, hace lo mismo mejor y está mejor mantenido (ver [Quick Peek frente a este mod](#quick-peek-frente-a-este-mod)). Este es un mod personal pequeño.
 
 ## Por qué

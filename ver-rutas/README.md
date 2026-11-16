@@ -7,8 +7,7 @@
 
 [Español](README.es.md)
 
-![Chips above the Claude Code prompt showing a hover preview of a folder](docs/images/path-chips.png)
-
+<!-- screenshot pending: docs/images/path-chips.png (see docs/SCREENSHOTS.md) -->
 > **Looking for something more polished?** [Quick Peek](https://github.com/midudev/better-claude) from `midudev/better-claude` does the same job better and is better maintained (see [Quick Peek vs. this mod](#quick-peek-vs-this-mod)). This is a small personal mod.
 
 ## Why
