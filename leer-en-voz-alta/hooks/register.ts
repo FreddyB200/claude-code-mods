@@ -1,28 +1,25 @@
-// Lee en voz alta las respuestas de Claude con `say` (la voz que trae macOS).
+// Lee en voz alta las respuestas de Claude con la mejor voz de tu Mac, incluidas las de Siri
+// (el mismo motor de voz que usa el plugin Narrator).
 //   /leer              lee la última respuesta
 //   /leer stop         detiene la lectura
 //   /leer auto         activa o desactiva la lectura automática al terminar cada respuesta
-//   /leer voz es <v>   cambia la voz en español   (ej.: /leer voz es Paulina)
-//   /leer voz en <v>   cambia la voz en inglés    (ej.: /leer voz en Reed (English (US)))
-//   /leer velocidad N  palabras por minuto (por defecto 190)
+//   /leer voz <nombre> fija una voz (ej.: /leer voz Eddy (es-MX)); /leer voz auto vuelve a la mejor
+//   /leer velocidad N  1 = ritmo normal de la voz; de 0.5 a 2 (por defecto 1.2)
 //   /leer estado       muestra la configuración
 import type { Hook, Register } from 'claude-code'
 
-// El tipo de `$` (la interfaz del motor), tal como lo recibe cualquier hook.
+import { MACOS, MARKER } from './speaker'
+
 type Engine = Parameters<Hook<'session.start'>>[0]
 
-type Cfg = { auto: boolean; voiceEs: string; voiceEn: string; rate: number; maxChars: number }
+type Cfg = { auto: boolean; voice: string; speed: number; maxChars: number }
 
 const DEFAULTS: Cfg = {
   auto: false,
-  voiceEs: 'Paulina',
-  voiceEn: 'Reed (English (US))',
-  rate: 190,
+  voice: '', // vacío: la mejor voz instalada para el idioma del texto
+  speed: 1.2,
   maxChars: 4000,
 }
-
-const SAY = '/usr/bin/say'
-const PKILL = '/usr/bin/pkill'
 
 async function getCfg($: Engine): Promise<Cfg> {
   const saved = (await $.store.get('cfg')) as Partial<Cfg> | undefined
@@ -56,7 +53,7 @@ function clean(md: string): { text: string; hadCode: boolean } {
   return { text, hadCode }
 }
 
-/** Heurística simple: ¿hay más palabras comunes del inglés que del español? */
+/** Heurística simple, solo para decidir en qué idioma va el aviso final sobre los bloques de código. */
 function isEnglish(t: string): boolean {
   const en = new Set(['the', 'and', 'of', 'to', 'is', 'in', 'that', 'it', 'for', 'with', 'you', 'are', 'this', 'on', 'be', 'your'])
   const es = new Set(['el', 'la', 'de', 'que', 'y', 'en', 'un', 'una', 'los', 'las', 'se', 'por', 'con', 'para', 'es', 'lo', 'del', 'tu', 'te'])
@@ -69,28 +66,25 @@ function isEnglish(t: string): boolean {
   return a > b
 }
 
+/** Detiene solo esta lectura (la marca va dentro del programa de voz), no la de otros plugins. */
 async function stop($: Engine): Promise<void> {
-  await $.process.run([PKILL, '-x', 'say'])
+  await $.process.run(['/usr/bin/pkill', '-f', MARKER])
 }
 
-/** Lanza `say` en segundo plano para no bloquear la sesión. El texto va como argumento, nunca dentro del script. */
+/**
+ * Lanza el programa de voz en segundo plano para no bloquear la sesión. El texto, la voz y la velocidad
+ * van por variables de entorno, nunca dentro del script.
+ */
 async function speak($: Engine, answer: string): Promise<boolean> {
   const cfg = await getCfg($)
   const { text, hadCode } = clean(answer)
   if (!text) return false
-  const english = isEnglish(text)
   let body = text.length > cfg.maxChars ? `${text.slice(0, cfg.maxChars)}…` : text
-  if (hadCode) body += english ? ' I skipped the code blocks.' : ' Omití los bloques de código.'
+  if (hadCode) body += isEnglish(text) ? ' I skipped the code blocks.' : ' Omití los bloques de código.'
   await stop($)
-  await $.process.run([
-    '/bin/sh',
-    '-c',
-    '"$0" -v "$1" -r "$2" "$3" >/dev/null 2>&1 &',
-    SAY,
-    english ? cfg.voiceEn : cfg.voiceEs,
-    String(cfg.rate),
-    ` ${body}`, // el espacio inicial evita que un texto que empiece por "-" se lea como opción
-  ])
+  await $.process.run(['/bin/sh', '-c', '/usr/bin/osascript -l JavaScript -e "$0" >/dev/null 2>&1 &', MACOS], {
+    env: { LEER_TEXT: body, LEER_VOICE: cfg.voice, LEER_SPEED: String(cfg.speed) },
+  })
   return true
 }
 
@@ -132,25 +126,23 @@ export const register: Register = on => {
         return { text: cfg.auto ? 'Lectura automática activada: leeré cada respuesta al terminar.' : 'Lectura automática desactivada.' }
       }
       case 'voz': {
-        const lang = rest[0]?.toLowerCase()
-        const name = rest.slice(1).join(' ')
-        if ((lang !== 'es' && lang !== 'en') || !name) return { text: 'Uso: /leer voz es <nombre>  o  /leer voz en <nombre>. Lista de voces: say -v ?' }
-        if (lang === 'es') cfg.voiceEs = name
-        else cfg.voiceEn = name
+        const name = rest.join(' ')
+        if (!name) return { text: `Voz actual: ${cfg.voice || 'la mejor disponible (automática)'}. Uso: /leer voz <nombre> o /leer voz auto. Los nombres: /narrator voices.` }
+        cfg.voice = name.toLowerCase() === 'auto' ? '' : name
         await setCfg($, cfg)
-        return { text: `Voz en ${lang === 'es' ? 'español' : 'inglés'}: ${name}.` }
+        return { text: cfg.voice ? `Voz fijada: ${cfg.voice}.` : 'Voz automática: la mejor disponible para el idioma de cada texto.' }
       }
       case 'velocidad': {
         const n = Number(rest[0])
-        if (!Number.isFinite(n) || n < 80 || n > 400) return { text: 'Uso: /leer velocidad <80-400> (palabras por minuto).' }
-        cfg.rate = Math.round(n)
+        if (!Number.isFinite(n) || n < 0.5 || n > 2) return { text: 'Uso: /leer velocidad <0.5-2> (1 = ritmo normal de la voz).' }
+        cfg.speed = n
         await setCfg($, cfg)
-        return { text: `Velocidad: ${cfg.rate} palabras por minuto.` }
+        return { text: `Velocidad: ${cfg.speed}.` }
       }
       case 'estado':
-        return { text: `Automático: ${cfg.auto ? 'sí' : 'no'} · Voz es: ${cfg.voiceEs} · Voz en: ${cfg.voiceEn} · Velocidad: ${cfg.rate} · Máx.: ${cfg.maxChars} caracteres` }
+        return { text: `Automático: ${cfg.auto ? 'sí' : 'no'} · Voz: ${cfg.voice || 'automática (la mejor, incluidas las de Siri)'} · Velocidad: ${cfg.speed} · Máx.: ${cfg.maxChars} caracteres` }
       default:
-        return { text: 'Comandos: /leer · /leer stop · /leer auto · /leer voz es|en <nombre> · /leer velocidad N · /leer estado' }
+        return { text: 'Comandos: /leer · /leer stop · /leer auto · /leer voz <nombre|auto> · /leer velocidad N · /leer estado' }
     }
   })
 }

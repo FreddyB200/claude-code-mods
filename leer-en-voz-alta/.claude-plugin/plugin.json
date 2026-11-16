@@ -1,5 +1,5 @@
 {
   "name": "leer-en-voz-alta",
-  "version": "0.1.0",
-  "description": "Lee en voz alta las respuestas de Claude con la voz de macOS: /leer, /leer auto y /leer stop."
+  "version": "0.2.0",
+  "description": "Lee en voz alta las respuestas de Claude con la mejor voz de tu Mac, incluidas las de Siri: /leer, /leer auto y /leer stop."
 }
