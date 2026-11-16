@@ -1,0 +1,18 @@
+{
+  "name": "claude-code-mods",
+  "owner": { "name": "Freddy Bautista" },
+  "plugins": [
+    {
+      "name": "leer-en-voz-alta",
+      "source": "./leer-en-voz-alta",
+      "description": "Read Claude's answers aloud with the macOS `say` voice: /leer, /leer auto and /leer stop.",
+      "version": "0.1.0"
+    },
+    {
+      "name": "ver-rutas",
+      "source": "./ver-rutas",
+      "description": "Paths cited by Claude become chips above the prompt with hover previews; also /ver N, /abrir N and /revelar N.",
+      "version": "0.2.0"
+    }
+  ]
+}

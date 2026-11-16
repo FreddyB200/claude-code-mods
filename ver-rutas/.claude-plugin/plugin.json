@@ -1,0 +1,6 @@
+{
+  "name": "ver-rutas",
+  "version": "0.2.0",
+  "description": "Las rutas que cita Claude aparecen como chips sobre el prompt: pasa el cursor para ver una vista previa y haz clic para ir allí. También /ver N, /abrir N y /revelar N.",
+  "types": "./types/index.d.ts"
+}
